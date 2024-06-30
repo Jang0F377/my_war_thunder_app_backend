@@ -1,0 +1,23 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = "*"
+sqlalchemy = "*"
+passlib = {extras = ["bcrypt"], version = "*"}
+psycopg2-binary = "*"
+pyjwt = "*"
+alembic = "*"
+
+[dev-packages]
+black = "*"
+
+[requires]
+python_version = "3.12"
+
+[scripts]
+run_migrations = "alembic upgrade head"
+start_dev = "uvicorn main:app --reload --env-file ../.env"
+run_and_start = "bash -c 'pipenv run run_migrations && pipenv run start_dev'"

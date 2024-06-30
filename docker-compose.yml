@@ -1,0 +1,44 @@
+networks:
+  wt-network:
+
+volumes:
+  wt-db-data:
+
+services:
+  wt-api:
+    container_name: wt-api
+    image: wt-api:latest
+    env_file: ./.env
+    depends_on:
+      wt-db:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - wt-network
+    volumes:
+      - .:/app
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+
+  wt-db:
+    container_name: wt-db
+    image: postgres:15.7-alpine
+    environment:
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      POSTGRES_USER: "${DB_USER}"
+      POSTGRES_DB: "${DB_DATABASE}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${DB_DATABASE} -U ${DB_USER}"]
+      interval: 20s
+      timeout: 30s
+      retries: 5
+      start_period: 15s
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    networks:
+      - wt-network
+    volumes:
+      - wt-db-data:/var/lib/postgresql/data
