@@ -18,7 +18,7 @@ down_revision: Union[str, None] = "f9f9c9dbc6fb"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 TABLE_NAME = "battles"
-BATTLE_MAP_LENGTH = 25
+BATTLE_MAP_LENGTH = 40
 
 
 def upgrade() -> None:

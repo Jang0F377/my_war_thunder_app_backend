@@ -1,13 +1,15 @@
 import os
 from datetime import datetime, timedelta
 from typing import Annotated
-from fastapi import Depends, FastAPI, Request, HTTPException
+from fastapi import Depends, FastAPI, Request, HTTPException, Security
 from fastapi.security import OAuth2PasswordRequestForm
 from database import provide_db
 from sqlalchemy.orm import Session
 from schemas.user import user_schema
 from schemas.token import token_schema
+from schemas.battle import battle_schema
 from crud.user import user_crud
+from crud.battle import battle_crud
 from services.hasher import PasswordHasher
 from services.jwt_service import JwtService
 from constants.user.user_constants import ROLES
@@ -71,12 +73,21 @@ def get_all_users(
     return user_crud.get_all_users(db=db, skip=skip, limit=limit)
 
 
+@app.get("/users/me/", response_model=user_schema.User)
+def get_active_user(
+    current_user: Annotated[
+        user_schema.User, Depends(user_crud.get_current_active_user)
+    ],
+) -> user_schema.User:
+    return current_user
+
+
 @app.get("/users/{user_identifier}", response_model=user_schema.User)
 def get_user(
     user_identifier: str, db: Session = Depends(provide_db)
 ) -> user_schema.User:
     user_found: user_schema.User
-    if user_identifier.find("@") is not -1:
+    if user_identifier.find("@") != -1:
         # is email
         user_found = user_crud.get_user_by_email(db=db, user_email=user_identifier)
     else:
@@ -105,3 +116,18 @@ def create_user(
         )
 
     return user_crud.create_user(db=db, user=user, hasher=password_hasher)
+
+
+@app.get('/battles/', response_model=list[battle_schema.Battle])
+def get_battles(__current_user__: Annotated[user_schema.User, Security(user_crud.get_current_active_user, scopes=['admin'])], skip: int = 0, limit: int = 100):
+    pass
+
+
+@app.get('/battles/me/', response_model=list[battle_schema.Battle])
+def get_battles_for_user(current_user: Annotated[user_schema.User, Depends(user_crud.get_current_active_user)]) -> list[battle_schema.Battle]:
+    return current_user.battles
+
+
+@app.post('/battles/',response_model=battle_schema.Battle)
+def add_battle_for_user(battle: battle_schema.BattleCreate, current_user: Annotated[user_schema.User, Security(user_crud.get_current_active_user, scopes=['basic'])], db: Session = Depends(provide_db)) -> battle_schema.Battle:
+    return battle_crud.add_battle_for_user(db=db, battle=battle, user_id=current_user.id)

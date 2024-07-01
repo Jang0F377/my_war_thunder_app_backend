@@ -1,10 +1,16 @@
-from typing import Union
+from typing import Union, Annotated
+from database import provide_db
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends, Security
 from fastapi.security import SecurityScopes
 from models.user import user_model
 from schemas.user import user_schema
+from schemas.token import token_schema
+from services.jwt_service import JwtService, DecodeError
+from pydantic import ValidationError
 from services.hasher import PasswordHasher
+
+jwt_service = JwtService()
 
 
 def get_user_by_id(db: Session, user_id: str) -> user_schema.User:
@@ -45,3 +51,53 @@ def authenticate_user(
         return False
 
     return user
+
+
+def get_current_user(
+    security_scopes: SecurityScopes,
+    token: Annotated[str, Depends(jwt_service.oauth2_scheme)],
+    db: Annotated[any, Depends(provide_db)]
+
+) -> user_schema.User:
+    
+    if security_scopes.scopes:
+        authenticate_value = f"Bearer scope='{security_scopes.scope_str}'"
+    else:
+        authenticate_value = "Bearer"
+    
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Could not validate credentials.",
+        headers={"WWW-Authenticate": authenticate_value},
+    )
+
+    try:
+        payload = jwt_service.decode_token(given_token=token)
+        sub = payload.get("sub")
+        if sub is None:
+            raise credentials_exception
+
+        token_scopes = payload.get("roles", [])
+        token_data = token_schema.TokenData(roles=token_scopes, email=sub)
+    except (DecodeError, ValidationError):
+        raise credentials_exception
+    
+
+    user = get_user_by_email(db=db,user_email=sub)
+    if user is None:
+        raise credentials_exception
+
+    for scope in security_scopes.scopes:
+        if scope not in token_data.roles:
+            raise HTTPException(status_code=401, detail="Insufficient Permissions")
+
+    return user
+
+
+def get_current_active_user(
+    current_user: Annotated[
+        user_model.User, Security(get_current_user, scopes=["basic"])
+    ],
+
+) -> user_schema.User:
+    return current_user

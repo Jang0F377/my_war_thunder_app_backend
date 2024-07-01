@@ -9,5 +9,5 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    username: Union[str, None] = None
-    scopes: list[str] = []
+    email: Union[str, None] = None
+    roles: str = []
