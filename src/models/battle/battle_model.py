@@ -5,7 +5,7 @@ from enum import Enum
 import uuid
 import datetime
 from database import Base
-from constants.battle.battle import BattleType, Faction
+from constants.battle.battle_constants import BattleType, Faction
 from models.user import user_model
 
 

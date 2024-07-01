@@ -1,8 +1,9 @@
+from typing import Union
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
+from fastapi.security import SecurityScopes
 from models.user import user_model
 from schemas.user import user_schema
-import jwt
 from services.hasher import PasswordHasher
 
 
@@ -30,3 +31,17 @@ def create_user(
     db.commit()
     db.refresh(user_to_create)
     return user_to_create
+
+
+def authenticate_user(
+    db: Session, email: str, password: str, hasher: PasswordHasher
+) -> Union[user_schema.User, bool]:
+    user = db.query(user_model.User).filter(user_model.User.email == email).first()
+
+    if user is None:
+        return False
+
+    if not hasher.compare_passwords(password, user.hashed_pwd):
+        return False
+
+    return user

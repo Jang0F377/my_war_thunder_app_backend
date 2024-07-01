@@ -1,13 +1,23 @@
-import datetime
+import os
+from datetime import datetime, timedelta
+from typing import Annotated
 from fastapi import Depends, FastAPI, Request, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from database import provide_db
 from sqlalchemy.orm import Session
 from schemas.user import user_schema
+from schemas.token import token_schema
 from crud.user import user_crud
 from services.hasher import PasswordHasher
+from services.jwt_service import JwtService
+from constants.user.user_constants import ROLES
+
+TOKEN_EXPIRATION_MINUTES = os.environ.get("ACCESS_TOKEN_EXPIRATION")
+TOKEN_TYPE = os.environ.get("TOKEN_TYPE")
 
 app = FastAPI()
 password_hasher = PasswordHasher()
+jwt_service = JwtService()
 
 
 @app.get("/healthcheck", response_model=None)
@@ -17,7 +27,7 @@ def healthcheck(request: Request) -> dict[str, any]:
     referer = req_headers["referer"]
     host = request.client.host
     port = request.client.port
-    time = datetime.datetime.now()
+    time = datetime.now()
     response = {
         "healthy": True,
         "time": time,
@@ -26,6 +36,32 @@ def healthcheck(request: Request) -> dict[str, any]:
         "referer": referer,
     }
     return response
+
+
+@app.post("/users/login")
+def login_user(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db: Session = Depends(provide_db),
+) -> token_schema.Token:
+    authenticated_user = user_crud.authenticate_user(
+        db=db,
+        email=form_data.username,
+        password=form_data.password,
+        hasher=password_hasher,
+    )
+    if not authenticated_user:
+        raise HTTPException(status_code=400, detail="Email or password incorrect.")
+
+    token_data = {
+        "sub": authenticated_user.email,
+        "roles": ROLES["BASIC"],
+    }
+
+    token_expiration = timedelta(minutes=int(TOKEN_EXPIRATION_MINUTES))
+    access_token = jwt_service.create_access_token(
+        data=token_data, expires=token_expiration
+    )
+    return token_schema.Token(access_token=access_token, token_type=TOKEN_TYPE)
 
 
 @app.get("/users/", response_model=list[user_schema.User])
