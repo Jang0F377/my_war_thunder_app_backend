@@ -12,9 +12,9 @@ from models.user import user_model
 class BattleType(Base):
     __tablename__ = "battles"
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4())
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     date_time: Mapped[datetime.datetime] = mapped_column(
-        sqlalchemy.DateTime(), default=datetime.datetime.now(), nullable=False
+        sqlalchemy.DateTime(), default=datetime.datetime.now, nullable=False
     )
     battle_map: Mapped[Optional[str]]
     faction_played: Mapped[Faction] = mapped_column(

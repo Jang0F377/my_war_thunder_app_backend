@@ -25,7 +25,7 @@ PWD_LENGTH = 64
 def upgrade() -> None:
     op.create_table(
         TABLE_NAME,
-        sa.Column("id", sa.UUID, primary_key=True, default=uuid.uuid4()),
+        sa.Column("id", sa.UUID, primary_key=True, default=uuid.uuid4),
         sa.Column("email", sa.VARCHAR(EMAIL_LENGTH), unique=True, index=True),
         sa.Column("hashed_pwd", sa.VARCHAR(PWD_LENGTH)),
         sa.Column("battles", sa.ARRAY(sa.JSON), default=[]),

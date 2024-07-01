@@ -118,16 +118,35 @@ def create_user(
     return user_crud.create_user(db=db, user=user, hasher=password_hasher)
 
 
-@app.get('/battles/', response_model=list[battle_schema.Battle])
-def get_battles(__current_user__: Annotated[user_schema.User, Security(user_crud.get_current_active_user, scopes=['admin'])], skip: int = 0, limit: int = 100):
-    pass
+@app.get("/battles/", response_model=list[battle_schema.Battle])
+def get_battles(
+    __current_user__: Annotated[
+        user_schema.User, Security(user_crud.get_current_active_user, scopes=["admin"])
+    ],
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(provide_db),
+):
+    return battle_crud.get_all_battles(db=db, skip=skip, limit=limit)
 
 
-@app.get('/battles/me/', response_model=list[battle_schema.Battle])
-def get_battles_for_user(current_user: Annotated[user_schema.User, Depends(user_crud.get_current_active_user)]) -> list[battle_schema.Battle]:
+@app.get("/battles/me/", response_model=list[battle_schema.Battle])
+def get_battles_for_user(
+    current_user: Annotated[
+        user_schema.User, Depends(user_crud.get_current_active_user)
+    ]
+) -> list[battle_schema.Battle]:
     return current_user.battles
 
 
-@app.post('/battles/',response_model=battle_schema.Battle)
-def add_battle_for_user(battle: battle_schema.BattleCreate, current_user: Annotated[user_schema.User, Security(user_crud.get_current_active_user, scopes=['basic'])], db: Session = Depends(provide_db)) -> battle_schema.Battle:
-    return battle_crud.add_battle_for_user(db=db, battle=battle, user_id=current_user.id)
+@app.post("/battles/", response_model=battle_schema.Battle)
+def add_battle_for_user(
+    battle: battle_schema.BattleCreate,
+    current_user: Annotated[
+        user_schema.User, Security(user_crud.get_current_active_user, scopes=["basic"])
+    ],
+    db: Session = Depends(provide_db),
+) -> battle_schema.Battle:
+    return battle_crud.add_battle_for_user(
+        db=db, battle=battle, user_id=current_user.id
+    )

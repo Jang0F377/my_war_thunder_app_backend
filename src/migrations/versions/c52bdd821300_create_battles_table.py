@@ -8,6 +8,7 @@ Create Date: 2024-06-29 16:27:02.952298
 
 from typing import Sequence, Union
 import uuid
+from datetime import datetime
 from alembic import op
 import sqlalchemy as sa
 
@@ -24,14 +25,16 @@ BATTLE_MAP_LENGTH = 40
 def upgrade() -> None:
     op.create_table(
         TABLE_NAME,
-        sa.Column("id", sa.UUID, primary_key=True, default=uuid.uuid4()),
-        sa.Column("date_time", sa.TIMESTAMP, default=sa.func.now()),
+        sa.Column("id", sa.UUID, primary_key=True, default=uuid.uuid4),
+        sa.Column("date_time", sa.TIMESTAMP, default=datetime.now),
         sa.Column("battle_map", sa.VARCHAR(BATTLE_MAP_LENGTH), nullable=True),
         sa.Column("faction_played", sa.VARCHAR),
         sa.Column("battle_type", sa.VARCHAR),
         sa.Column("player_br", sa.REAL(1), default=0.0),
         sa.Column("ceiling_br", sa.REAL(1), default=0.0),
-        sa.Column("battle_won", sa.BOOLEAN, nullable=True, default=None),
+        sa.Column(
+            "battle_won", sa.BOOLEAN, nullable=True, default=None, server_default=None
+        ),
         sa.Column("user_id", sa.UUID, sa.ForeignKey("users.id")),
     )
 

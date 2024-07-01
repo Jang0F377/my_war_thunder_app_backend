@@ -56,15 +56,14 @@ def authenticate_user(
 def get_current_user(
     security_scopes: SecurityScopes,
     token: Annotated[str, Depends(jwt_service.oauth2_scheme)],
-    db: Annotated[any, Depends(provide_db)]
-
+    db: Annotated[any, Depends(provide_db)],
 ) -> user_schema.User:
-    
+
     if security_scopes.scopes:
         authenticate_value = f"Bearer scope='{security_scopes.scope_str}'"
     else:
         authenticate_value = "Bearer"
-    
+
     credentials_exception = HTTPException(
         status_code=401,
         detail="Could not validate credentials.",
@@ -81,9 +80,8 @@ def get_current_user(
         token_data = token_schema.TokenData(roles=token_scopes, email=sub)
     except (DecodeError, ValidationError):
         raise credentials_exception
-    
 
-    user = get_user_by_email(db=db,user_email=sub)
+    user = get_user_by_email(db=db, user_email=sub)
     if user is None:
         raise credentials_exception
 
@@ -98,6 +96,5 @@ def get_current_active_user(
     current_user: Annotated[
         user_model.User, Security(get_current_user, scopes=["basic"])
     ],
-
 ) -> user_schema.User:
     return current_user
