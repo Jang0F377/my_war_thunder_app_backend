@@ -25,6 +25,7 @@ services:
   wt-db:
     container_name: wt-db
     image: postgres:15.7-alpine
+    env_file: ./.env
     environment:
       POSTGRES_PASSWORD: "${DB_PASSWORD}"
       POSTGRES_USER: "${DB_USER}"

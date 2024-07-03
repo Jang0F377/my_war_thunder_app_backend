@@ -10,15 +10,16 @@ passlib = {extras = ["bcrypt"], version = "*"}
 psycopg2-binary = "*"
 pyjwt = "*"
 alembic = "*"
+python-dotenv = "*"
 
 [dev-packages]
 black = "*"
 
 [requires]
-python_version = "3.12"
+python_version = "3.10"
 
 [scripts]
 run_migrations = "alembic upgrade head"
-start_dev = "uvicorn main:app --reload --env-file ../.env"
+start_dev = "fastapi run main.py --port 8000"
 run_and_start = "bash -c 'pipenv run run_migrations && pipenv run start_dev'"
 format = "black ./"

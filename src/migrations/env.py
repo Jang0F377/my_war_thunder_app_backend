@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -9,6 +10,7 @@ from alembic import context
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+load_dotenv()
 
 # here we allow ourselves to pass interpolation vars to alembic.ini
 # from the host env

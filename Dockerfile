@@ -6,6 +6,11 @@ COPY requirements.txt ./requirements.txt
 
 RUN pip install --no-cache-dir --upgrade -r ./requirements.txt
 
+RUN pip install pipenv
+
 COPY . .
 
-CMD [ "fastapi", "run", "src/main.py", "--port" , "8000"]
+WORKDIR /app/src
+
+
+CMD [ "pipenv", "run", "run_and_start"]
